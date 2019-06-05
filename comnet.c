@@ -523,7 +523,8 @@ void receiveARPFrame(int sd, unsigned char *frame)
 
 void TCP_Scan(int sd, int index)
 {
-	int count = 0;
+	int open = 0;
+	int filt = 0;
 
 	printf(" Escaneando ...\n");
 
@@ -534,13 +535,25 @@ void TCP_Scan(int sd, int index)
 
 		sendFrame(sd, index, frame_s, 130);
 
-		if(TCPPortIsOpen(sd, frame_r, htons(i)))
+		int port_state = TCPPortIsOpen(sd, frame_r, htons(i));
+
+		if(port_state == 1)
 		{
 			printf(" %i\tAbierto\n", i);
-			count++;
+			open++;
+		}
+
+		if(port_state == -1)
+		{
+			//printf(" %i\tFiltrado\n", i);
+			filt++;
 		}
 	}
-	printf(" %i puertos cerrados\n", (MAX_PORTS - count));
+
+	if((MAX_PORTS - open - filt) > 0)
+		printf(" %i puertos cerrados\n", (MAX_PORTS - open - filt));
+	if(filt > 0)
+		printf(" %i puertos filtrados\n", filt);
 }
 void TCPframe(unsigned char *frame, unsigned int port)
 {
@@ -701,7 +714,6 @@ int TCPPortIsOpen(int sd, unsigned char *frame, unsigned int port)
 	{
 		//perror("Error al recibir");
 		//printf("Elapsed time: %ld milliseconds\n", mtime);
+		return -1;
 	}
-
-	return -1;
 }
